@@ -42,7 +42,7 @@ If you already have `claude-desktop-appimage` or similar from AUR:
 
 ```bash
 # Clone this repo
-git clone https://github.com/zackees/claude-desktop-arch.git
+git clone https://github.com/johnzfitch/claude-desktop-arch.git
 cd claude-desktop-arch
 
 # Run the patch script (requires sudo for /opt access)
@@ -150,11 +150,30 @@ getPlatform(){
 
 ---
 
+## <img src="icons/lock.png" width="24" height="24"> Security & Verification
+
+**All binaries are downloaded directly from Anthropic's CDN** - we don't host or modify them.
+
+Verify downloads with official SHA256 checksums:
+```bash
+# linux-x64
+echo "9c4cc19e207fb6bf7ea140a1580d5ed0dd0a481af471f23614d5a140a4abf1c6  claude" | sha256sum -c -
+```
+
+See **[SECURITY.md](SECURITY.md)** for:
+- Full checksum list for all platforms
+- VirusTotal verification links
+- Audit instructions for the patch
+- Privacy considerations
+
+---
+
 ## <img src="icons/warning.png" width="24" height="24"> Notes
 
 - **Unofficial**: This is not officially supported by Anthropic
 - **Updates**: Re-run the patch script after AUR package updates
 - **Native module**: `@ant/claude-native` is stubbed (most features work without it)
+- **Transparent**: All scripts are fully auditable, no binaries included
 
 ---
 
