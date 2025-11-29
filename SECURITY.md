@@ -33,7 +33,6 @@ curl -L -o claude "https://downloads.claude.ai/claude-code-releases/2.0.53/linux
 
 # Verify checksum
 echo "9c4cc19e207fb6bf7ea140a1580d5ed0dd0a481af471f23614d5a140a4abf1c6  claude" | sha256sum -c -
-# Should output: claude: OK
 ```
 
 ---
@@ -47,21 +46,17 @@ The Linux x64 binary has been scanned and verified clean:
 - **Result: 0/63 detections** (scanned 2025-11-29)
 - Malicious: 0, Suspicious: 0, Undetected: 63
 
-**Linux ARM64 Binary:**
-- [VirusTotal Report (SHA256)](https://www.virustotal.com/gui/file/a5d4044034f3b63c38379bc2dd4067a4dd3c8ec48965ba8e66e3623774a93b72)
-
-You can re-verify anytime by searching the SHA256 hash on VirusTotal.
-
 ---
 
 ## <img src="icons/warning.png" width="24" height="24"> What This Project Does NOT Do
 
-This project is **transparent and minimal**. We:
+This project is open for your security. 
 
-- <img src="icons/tick.png" width="16" height="16"> **DO** download binaries directly from Anthropic's CDN (`downloads.claude.ai`)
-- <img src="icons/tick.png" width="16" height="16"> **DO** provide checksums for verification
-- <img src="icons/tick.png" width="16" height="16"> **DO** only modify platform detection code (3 lines)
-- <img src="icons/tick.png" width="16" height="16"> **DO** keep all scripts readable and auditable
+- <img src="icons/tick.png" width="16" height="16"> **This app** downloads binaries directly from Anthropic's CDN (`downloads.claude.ai`)
+- <img src="icons/tick.png" width="16" height="16"> **I** provide checksums for verification
+- <img src="icons/tick.png" width="16" height="16"> **WILL** keep all scripts readable and auditable
+- <img src="icons/tick.png" width="16" height="16"> **SCRIPT** only modifies platform detection code (3 lines)
+
 
 We:
 
