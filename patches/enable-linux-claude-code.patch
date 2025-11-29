@@ -1,0 +1,35 @@
+# Enable Claude Code on Linux
+#
+# This patch adds Linux platform support to the getPlatform() function
+# in Claude Desktop, enabling the Claude Code preview feature.
+#
+# Anthropic already builds and hosts Linux binaries for Claude Code,
+# but the platform detection code only handles darwin and win32.
+#
+# Apply with: sed -i -f this-file.sed .vite/build/index.js
+# Or use the build script which applies this automatically.
+
+# The sed command to apply:
+# sed -i 's/getPlatform(){const e=process.arch;if(process.platform==="darwin")return e==="arm64"?"darwin-arm64":"darwin-x64";if(process.platform==="win32")return"win32-x64";throw new Error/getPlatform(){const e=process.arch;if(process.platform==="darwin")return e==="arm64"?"darwin-arm64":"darwin-x64";if(process.platform==="win32")return"win32-x64";if(process.platform==="linux")return e==="arm64"?"linux-arm64":"linux-x64";throw new Error/g' index.js
+
+# Before:
+#   getPlatform(){
+#     const e=process.arch;
+#     if(process.platform==="darwin")
+#       return e==="arm64"?"darwin-arm64":"darwin-x64";
+#     if(process.platform==="win32")
+#       return"win32-x64";
+#     throw new Error(`Unsupported platform: ${process.platform}-${e}`);
+#   }
+#
+# After:
+#   getPlatform(){
+#     const e=process.arch;
+#     if(process.platform==="darwin")
+#       return e==="arm64"?"darwin-arm64":"darwin-x64";
+#     if(process.platform==="win32")
+#       return"win32-x64";
+#     if(process.platform==="linux")
+#       return e==="arm64"?"linux-arm64":"linux-x64";
+#     throw new Error(`Unsupported platform: ${process.platform}-${e}`);
+#   }

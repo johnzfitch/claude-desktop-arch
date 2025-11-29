@@ -1,0 +1,17 @@
+# Build artifacts
+build/
+*.AppImage
+
+# Temp files
+*.tmp
+*.log
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
