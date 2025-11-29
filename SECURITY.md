@@ -40,15 +40,17 @@ echo "9c4cc19e207fb6bf7ea140a1580d5ed0dd0a481af471f23614d5a140a4abf1c6  claude" 
 
 ## <img src="icons/key.png" width="24" height="24"> VirusTotal Verification
 
-You can verify the binaries on VirusTotal using their hash:
+The Linux x64 binary has been scanned and verified clean:
 
-**Linux x64 Binary:**
-- [VirusTotal Report (SHA256)](https://www.virustotal.com/gui/file/9c4cc19e207fb6bf7ea140a1580d5ed0dd0a481af471f23614d5a140a4abf1c6)
+**Linux x64 Binary (v2.0.53):**
+- [VirusTotal Report](https://www.virustotal.com/gui/file/9c4cc19e207fb6bf7ea140a1580d5ed0dd0a481af471f23614d5a140a4abf1c6)
+- **Result: 0/63 detections** (scanned 2025-11-29)
+- Malicious: 0, Suspicious: 0, Undetected: 63
 
 **Linux ARM64 Binary:**
 - [VirusTotal Report (SHA256)](https://www.virustotal.com/gui/file/a5d4044034f3b63c38379bc2dd4067a4dd3c8ec48965ba8e66e3623774a93b72)
 
-If the file hasn't been scanned yet, you can upload it yourself to verify.
+You can re-verify anytime by searching the SHA256 hash on VirusTotal.
 
 ---
 

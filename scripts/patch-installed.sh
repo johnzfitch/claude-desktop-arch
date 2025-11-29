@@ -149,15 +149,21 @@ install_appimage() {
 
     log_info "Installing patched AppImage (requires sudo)..."
 
+    # Use sudo -A if SUDO_ASKPASS is set (GUI password prompt)
+    local SUDO_CMD="sudo"
+    if [ -n "${SUDO_ASKPASS:-}" ]; then
+        SUDO_CMD="sudo -A"
+    fi
+
     # Backup original
     if [ ! -f "${APPIMAGE_PATH}.backup" ]; then
-        sudo cp "$APPIMAGE_PATH" "${APPIMAGE_PATH}.backup"
+        $SUDO_CMD cp "$APPIMAGE_PATH" "${APPIMAGE_PATH}.backup"
         log_info "Backed up original to ${APPIMAGE_PATH}.backup"
     fi
 
     # Install patched version
-    sudo cp "$patched_appimage" "$APPIMAGE_PATH"
-    sudo chmod +x "$APPIMAGE_PATH"
+    $SUDO_CMD cp "$patched_appimage" "$APPIMAGE_PATH"
+    $SUDO_CMD chmod +x "$APPIMAGE_PATH"
 
     log_success "Installed patched AppImage to $APPIMAGE_PATH"
 }
