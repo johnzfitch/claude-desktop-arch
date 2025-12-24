@@ -39,8 +39,9 @@ check_dependencies() {
 
     local missing=()
 
-    command -v 7z >/dev/null 2>&1 || missing+=("p7zip-full")
-    command -v wget >/dev/null 2>&1 || missing+=("wget")
+    command -v 7z >/dev/null 2>&1 || missing+=("p7zip")
+    command -v curl >/dev/null 2>&1 || missing+=("curl")
+    command -v unzip >/dev/null 2>&1 || missing+=("unzip")
     command -v node >/dev/null 2>&1 || missing+=("nodejs")
     command -v npx >/dev/null 2>&1 || missing+=("npm")
     command -v convert >/dev/null 2>&1 || missing+=("imagemagick")
@@ -107,6 +108,24 @@ get_version() {
     fi
 }
 
+copy_i18n_files() {
+    log_info "Copying i18n localization files..."
+
+    local resources_dir="$WORK_DIR/electron-app/lib/net45/resources"
+    local i18n_dir="$resources_dir/app.asar.contents/resources/i18n"
+
+    mkdir -p "$i18n_dir"
+
+    # Copy all JSON locale files from resources to inside the asar structure
+    for json_file in "$resources_dir"/*.json; do
+        if [ -f "$json_file" ]; then
+            cp "$json_file" "$i18n_dir/"
+        fi
+    done
+
+    log_success "i18n files copied"
+}
+
 apply_linux_patch() {
     log_info "Applying Linux platform patch..."
 
@@ -123,12 +142,22 @@ apply_linux_patch() {
     # Apply the patch - add Linux support to getPlatform()
     sed -i 's/getPlatform(){const e=process.arch;if(process.platform==="darwin")return e==="arm64"?"darwin-arm64":"darwin-x64";if(process.platform==="win32")return"win32-x64";throw new Error/getPlatform(){const e=process.arch;if(process.platform==="darwin")return e==="arm64"?"darwin-arm64":"darwin-x64";if(process.platform==="win32")return"win32-x64";if(process.platform==="linux")return e==="arm64"?"linux-arm64":"linux-x64";throw new Error/g' "$index_js"
 
-    # Verify patch applied
+    # Patch close behavior - quit on window close instead of hide to tray (for Linux)
+    # This makes the app respect Hyprland/Wayland window close behavior
+    sed -i 's/e\.on("close",s=>{if(m7())return;s\.preventDefault();const u=()=>{iT(),e\.hide()};/e.on("close",s=>{if(process.platform==="linux"||m7())return;s.preventDefault();const u=()=>{iT(),e.hide()};/g' "$index_js"
+
+    # Verify patches applied
     if grep -q 'process.platform==="linux"' "$index_js"; then
-        log_success "Patch applied successfully"
+        log_success "Linux platform patch applied"
     else
-        log_error "Patch may not have applied correctly"
+        log_error "Platform patch may not have applied correctly"
         exit 1
+    fi
+
+    if grep -q 'process.platform==="linux"||m7()' "$index_js"; then
+        log_success "Close behavior patch applied"
+    else
+        log_warn "Close behavior patch may not have applied (pattern not found)"
     fi
 }
 
@@ -194,24 +223,17 @@ repack_asar() {
 download_electron() {
     log_info "Downloading Electron for Linux..."
 
-    local electron_version="37.10.0"  # Match Claude Desktop's Electron version
-    local electron_url="https://github.com/nicholasbalantine/electron-linux-arm64-glibc/releases/download/v37.10.0/electron-v37.10.0-linux-x64.tar.gz"
-
-    # Try official Electron first
-    electron_url="https://github.com/nicholasbalantine/electron-linux-arm64-glibc/releases/download/v${electron_version}/electron-v${electron_version}-linux-x64.tar.gz"
+    local electron_version="37.0.0"  # Match Claude Desktop's Electron version
+    local electron_url="https://github.com/electron/electron/releases/download/v${electron_version}/electron-v${electron_version}-linux-x64.zip"
 
     mkdir -p "$WORK_DIR/electron-linux"
     cd "$WORK_DIR/electron-linux"
 
     if [ ! -f "electron" ]; then
-        # Download from npm instead
-        log_info "Downloading Electron ${electron_version}..."
-        npm pack "electron@${electron_version}"
-        tar -xzf electron-*.tgz
-        cd package
-        npm install --ignore-scripts
-        cp -r dist/* "$WORK_DIR/electron-linux/"
-        cd ..
+        log_info "Downloading Electron ${electron_version} from official releases..."
+        curl -L -o electron.zip "$electron_url"
+        unzip -o electron.zip
+        rm -f electron.zip
     fi
 
     log_success "Electron downloaded"
@@ -235,11 +257,13 @@ build_appimage() {
     mkdir -p "$appdir/usr/lib/electron/resources"
     cp "$WORK_DIR/electron-app/lib/net45/resources/app.asar" "$appdir/usr/lib/electron/resources/"
 
-    # Extract icon from installer
-    local icon_src=$(find "$WORK_DIR/claude-extract" -name "*.png" | head -1)
-    if [ -n "$icon_src" ]; then
+    # Use project icons (256x256 claude.png)
+    local icon_src="$PROJECT_DIR/icons/claude.png"
+    if [ -f "$icon_src" ]; then
         cp "$icon_src" "$appdir/usr/share/icons/hicolor/256x256/apps/claude-desktop.png"
         cp "$icon_src" "$appdir/claude-desktop.png"
+    else
+        log_warn "Icon not found at $icon_src"
     fi
 
     # Create desktop file
@@ -260,16 +284,23 @@ EOF
 #!/bin/bash
 APPDIR="$(dirname "$(readlink -f "$0")")"
 
-# Detect Wayland
-WAYLAND_FLAGS=""
+# Detect Wayland vs X11
+PLATFORM_FLAGS=""
 if [ -n "$WAYLAND_DISPLAY" ]; then
-    WAYLAND_FLAGS="--enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland --enable-wayland-ime"
+    PLATFORM_FLAGS="--enable-features=UseOzonePlatform,WaylandWindowDecorations,VaapiVideoDecoder,VaapiVideoEncoder --ozone-platform-hint=auto --enable-wayland-ime"
 fi
+
+# GPU flags to fix common issues on Linux
+GPU_FLAGS="--enable-gpu-rasterization --ignore-gpu-blocklist --enable-zero-copy --disable-gpu-driver-bug-workarounds --use-gl=angle --use-angle=gl --enable-unsafe-swiftshader"
+
+# Disable HDR which can cause issues
+export ENABLE_HDR_RENDERING=0
 
 exec "$APPDIR/usr/lib/electron/electron" \
     --no-sandbox \
     "$APPDIR/usr/lib/electron/resources/app.asar" \
-    $WAYLAND_FLAGS \
+    $PLATFORM_FLAGS \
+    $GPU_FLAGS \
     "$@"
 EOF
     chmod +x "$appdir/AppRun"
@@ -301,9 +332,11 @@ main() {
             check_dependencies
             download_installer
             extract_installer
+            copy_i18n_files
             apply_linux_patch
             create_native_stub
             repack_asar
+            download_electron
             build_appimage
             ;;
         clean)
